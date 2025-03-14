@@ -17,6 +17,7 @@ def data_cleaning():
     for col in df.select_dtypes(include=['object']).columns:
         df[col] = pd.to_numeric(df[col])
     print(df.dtypes.value_counts())
+    print("hi")
     return df
 def data_splitting():
     """Train-test splits the dataset"""
