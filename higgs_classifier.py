@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
+
 def load_data():
     """Load the Higgs-Boson dataset from CSV file"""
     df = pd.read_csv("higgs.csv")
@@ -45,8 +46,10 @@ def train_model_XGboost():
     else:
         model.fit(X_train, y_train)
     return model
-def model_evaluation():
-    pass
+def model_evaluation(model, X_test, y_test):
+    y_prob = model.predict_proba(X_test)[:, 1]
+    auc = roc_auc_score(y_test, y_proba)
+    fpr, tpr, _ = roc_curve(y_test, y_proba)
 def shap_generator():
     pass
 def main():
