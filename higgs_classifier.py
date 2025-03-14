@@ -6,11 +6,11 @@ from sklearn.metrics import roc_auc_score, roc_curve, classification_report
 from xgboost import XGBClassifier
 
 
-def load_data():
+def load_data(csv_path:str)-> pd.DataFrame:
     """Load the Higgs-Boson dataset from CSV file"""
     df = pd.read_csv("higgs.csv")
     return df
-def data_cleaning():
+def data_cleaning(df:pd.DataFrame)-> pd.DataFrame:
     """Cleans the Higgs-Boson dataset by replacing missing values and converting column objects to numerical values"""
     df = df.copy()
     df.replace(-999.0, np.nan, inplace=True)
@@ -47,6 +47,17 @@ def train_model_XGboost():
     else:
         model.fit(X_train, y_train)
     return model
+def feature_label_gen(df:pd.DataFrame, label_column:str="Label")-> tuple[pd.DataFrame, pd.Series]:
+    y = df[label_column].map({'s': 1, 'b': 0}).astype(int)
+    columns_to_drop = [label_column, 'EventId', 'Weight', 'KaggleSet', 'KaggleWeight']
+    X = df.drop(columns=[col for col in columns_to_drop if col in df.columns])
+    object_cols = X.select_dtypes(include=['object']).columns.tolist()
+    # Check for any remaining object columns and report them
+    if object_cols:
+        print(f"Warning: The following columns still have object type and will be dropped: {object_cols}")
+        X = X.drop(columns=object_cols)
+    return X, y
+    
 def model_evaluation(model, X_test, y_test):
     y_proba = model.predict_proba(X_test)[:, 1]
     auc_score = roc_auc_score(y_test, y_proba)
@@ -79,9 +90,14 @@ def main():
     test_size=0.2
     rand_state=69
     df=load_data(data_path)
-    df=data_cleaning(df)
+    df_clean=data_cleaning(df)
+    X,y=feature_label_gen(df_clean, label_column="Label")
+    X_train, X_val, y_train, y_val = data_splitting(X, y, test_size=test_size, rand_state=rand_state)
+    model=train_model_XGboost(X_train, y_train, X_val, y_val)
+    auc_score=model_evaluation(model, X_val, y_val)
+    _=shap_generator(model, X_val.sample(100))
+    model.save_model("higgs_classifier.model")
     
-    pass
 if __name__ == "__main__":
     main()
 
