@@ -23,14 +23,14 @@ def data_cleaning(df:pd.DataFrame)-> pd.DataFrame:
     return df
 def data_splitting():
     """Train-test splits the dataset"""
-    return train_test_split()
+    return train_test_split(X: pd.DataFrame, y: pd.Series, test_size: float = 0.2, rand_state: int = 42))
 def train_model_XGboost():
     """Trains the XGboost model"""
     num_neg = (y_train==0).sum()
     num_pos = (y_train==1).sum()
     scale_pos_weight = num_neg / num_pos
 
-    # Create the model
+    # Creates the model
     model = XGBClassifier(
         n_estimators=100,
         max_depth=6,
@@ -54,7 +54,7 @@ def feature_label_gen(df:pd.DataFrame, label_column:str="Label")-> tuple[pd.Data
     object_cols = X.select_dtypes(include=['object']).columns.tolist()
     # Check for any remaining object columns and report them
     if object_cols:
-        print(f"Warning: The following columns still have object type and will be dropped: {object_cols}")
+        print(f"Warning: The following columns still have object type and will thus be dropped: {object_cols}")
         X = X.drop(columns=object_cols)
     return X, y
     
@@ -95,7 +95,7 @@ def main():
     X_train, X_val, y_train, y_val = data_splitting(X, y, test_size=test_size, rand_state=rand_state)
     model=train_model_XGboost(X_train, y_train, X_val, y_val)
     auc_score=model_evaluation(model, X_val, y_val)
-    _=shap_generator(model, X_val.sample(100))
+    _ = shap_generator(model, X_val.sample(100))
     model.save_model("higgs_classifier.model")
     
 if __name__ == "__main__":
